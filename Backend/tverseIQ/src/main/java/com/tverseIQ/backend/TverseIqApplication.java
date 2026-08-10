@@ -1,4 +1,4 @@
-package com.tverseIQ.tverseIQ;
+package com.tverseIQ.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
