@@ -12,4 +12,6 @@ import java.util.List;
 public interface CampaignProductMapRepository extends JpaRepository<CampaignProductMap, CampaignProductKey> {
 @Query("SELECT cpm FROM CampaignProductMap cpm JOIN FETCH cpm.product WHERE cpm.campaign.campaignId = :campaignID")
 List<CampaignProductMap> findByCampaignIdWithProducts(@Param("campaignId") Long campaignId);
+    List<CampaignProductMap> findByProduct_ProductId(Long productId);
+
 }
