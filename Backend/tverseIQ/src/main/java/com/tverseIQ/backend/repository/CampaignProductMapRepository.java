@@ -6,9 +6,11 @@ import com.tverseIQ.backend.model.CampaignProductMap;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface CampaignProductMapRepository extends JpaRepository<CampaignProductMap, CampaignProductKey> {
 @Query("SELECT cpm FROM CampaignProductMap cpm JOIN FETCH cpm.product WHERE cpm.campaign.campaignId = :campaignID")
 List<CampaignProductMap> findByCampaignIdWithProducts(@Param("campaignId") Long campaignId);
