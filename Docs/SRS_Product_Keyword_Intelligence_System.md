@@ -19,7 +19,7 @@ TverseIQ is a marketplace intelligence system for Thalasi Knitfab's Amazon, Flip
 | 3 | Price Advisor | Independent (image + market comparables) |
 | 4 | Demand/Roadmap Engine | Module 2 (keyword maturity) + Module 3 (price band) |
 
-**This document specifies Phase 0–2 in full detail** (the Keyword Engine backbone: mapping, parsing, attribution, dashboard) since that is the immediate build target, and gives Modules 1/3/4 in outline form for continuity.
+**This document specifies Phase 0–2 in full detail** (the Keyword Engine backbone: mapping, parsing, attribution, dashboard) since that is the immediate build target, and gives Modules 1/3/4 in outline form for continuity.  
 
 ---
 
