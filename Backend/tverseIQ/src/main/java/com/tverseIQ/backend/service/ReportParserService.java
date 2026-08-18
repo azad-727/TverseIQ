@@ -7,6 +7,7 @@ import com.tverseIQ.backend.model.ChannelSkuMap;
 import com.tverseIQ.backend.model.Platform;
 import com.tverseIQ.backend.repository.ChannelSkuMapRepository;
 import com.tverseIQ.backend.repository.AdsReportUploadRepository; // Your tracking table
+import com.tverseIQ.backend.repository.SearchTermRowJdbcRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +28,13 @@ public class ReportParserService {
 
     private final ChannelSkuMapRepository channelSkuMapRepository;
     private final AdsReportUploadRepository uploadRepository;
+    private final SearchTermRowJdbcRepository searchTermRowJdbcRepository;
 
     public ReportParserService(ChannelSkuMapRepository channelSkuMapRepository,
-                               AdsReportUploadRepository uploadRepository) {
+                               AdsReportUploadRepository uploadRepository, SearchTermRowJdbcRepository searchTermRowJdbcRepository) {
         this.channelSkuMapRepository = channelSkuMapRepository;
         this.uploadRepository = uploadRepository;
+        this.searchTermRowJdbcRepository = searchTermRowJdbcRepository;
     }
 
     @Async
@@ -85,7 +89,7 @@ public class ReportParserService {
                 String matchType = getCellText(row.getCell(8));
 
                 BigDecimal spend = getNumericCell(row.getCell(14));
-                Integer orders = getIntegerCell(row.getCell(18));
+                BigDecimal orders = getNumericCell(row.getCell(18));
                 BigDecimal sales = getNumericCell(row.getCell(15));
 
                 // O(1) Memory Lookup instead of Database hit
@@ -118,7 +122,7 @@ public class ReportParserService {
                 String campaignName = cols[3].trim();
                 String keyword = cols[4].trim();
 
-                Integer orders = Integer.parseInt(cols[9]) + Integer.parseInt(cols[10]);
+                BigDecimal orders = new BigDecimal(cols[9]).add(new BigDecimal(cols[10]));
                 BigDecimal sales = new BigDecimal(cols[13]).add(new BigDecimal(cols[14]));
                 BigDecimal spend = new BigDecimal(cols[16]);
                 String matchType = "BROAD";
@@ -161,6 +165,11 @@ public class ReportParserService {
     private BigDecimal getNumericCell(Cell cell) {
         if (cell == null || cell.getCellType() != CellType.NUMERIC) return BigDecimal.ZERO;
         return BigDecimal.valueOf(cell.getNumericCellValue());
+    }
+    private void flushToDatabase(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
+        log.info("Flushing batch of {} rows to the database...", batch.size());
+
+        searchTermRowJdbcRepository.batchUpsert(batch, uploadId, periodStart, periodEnd);
     }
 
     private Integer getIntegerCell(Cell cell) {
