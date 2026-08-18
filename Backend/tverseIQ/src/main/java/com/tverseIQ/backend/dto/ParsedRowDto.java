@@ -8,7 +8,7 @@ public record ParsedRowDto (
         String keyword,
         String matchType,
         BigDecimal spend,
-        BigDecimal orders,
+        Integer orders,
         BigDecimal sales
 
 ){}

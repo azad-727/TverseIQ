@@ -47,7 +47,7 @@ public class SearchTermRowJdbcRepository {
                 ps.setObject(5, periodStart);
                 ps.setObject(6, periodEnd);
                 ps.setBigDecimal(7, row.spend());
-                ps.setBigDecimal(8, row.orders());
+                ps.setInt(8, row.orders());
                 ps.setBigDecimal(9, row.sales());
             }
 

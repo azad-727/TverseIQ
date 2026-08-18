@@ -3,10 +3,11 @@ package com.tverseIQ.backend.service;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.tverseIQ.backend.dto.ParsedRowDto;
+import com.tverseIQ.backend.model.AdsReportUpload;
 import com.tverseIQ.backend.model.ChannelSkuMap;
 import com.tverseIQ.backend.model.Platform;
 import com.tverseIQ.backend.repository.ChannelSkuMapRepository;
-import com.tverseIQ.backend.repository.AdsReportUploadRepository; // Your tracking table
+import com.tverseIQ.backend.repository.AdsReportUploadRepository;
 import com.tverseIQ.backend.repository.SearchTermRowJdbcRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -31,7 +32,8 @@ public class ReportParserService {
     private final SearchTermRowJdbcRepository searchTermRowJdbcRepository;
 
     public ReportParserService(ChannelSkuMapRepository channelSkuMapRepository,
-                               AdsReportUploadRepository uploadRepository, SearchTermRowJdbcRepository searchTermRowJdbcRepository) {
+                               AdsReportUploadRepository uploadRepository,
+                               SearchTermRowJdbcRepository searchTermRowJdbcRepository) {
         this.channelSkuMapRepository = channelSkuMapRepository;
         this.uploadRepository = uploadRepository;
         this.searchTermRowJdbcRepository = searchTermRowJdbcRepository;
@@ -40,27 +42,36 @@ public class ReportParserService {
     @Async
     public void parseAndIngestReport(MultipartFile file, Platform platform, Long uploadId) {
         log.info("Job {}: Started async parsing for {} file", uploadId, platform);
-
         updateJobStatus(uploadId, "PROCESSING");
 
-        Map<String, Long> entityResolutionMap = channelSkuMapRepository.findByPlatform(platform)
-                .stream()
-                .collect(Collectors.toMap(
-                        ChannelSkuMap::getChannelProductId,
-                        map -> map.getProduct().getProductId()
-                ));
-
-        List<ParsedRowDto> batch = new ArrayList<>();
-
         try {
+            // 1. Fetch the upload record to get the periods for the database flush
+            AdsReportUpload uploadRecord = uploadRepository.findById(uploadId)
+                    .orElseThrow(() -> new RuntimeException("Upload ID not found"));
+
+            LocalDate periodStart = uploadRecord.getPeriodStart();
+            LocalDate periodEnd = uploadRecord.getPeriodEnd();
+
+            // 2. Pre-load Entity Map
+            Map<String, Long> entityResolutionMap = channelSkuMapRepository.findByPlatform(platform)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            ChannelSkuMap::getChannelProductId,
+                            (ChannelSkuMap map) -> map.getProduct().getProductId()
+                    ));
+
+            List<ParsedRowDto> batch = new ArrayList<>();
+
+            // 3. Parse based on platform (passing the dates and ID down)
             if (platform == Platform.AMAZON) {
-                parseAmazonExcel(file, batch, entityResolutionMap);
+                parseAmazonExcel(file, batch, entityResolutionMap, uploadId, periodStart, periodEnd);
             } else if (platform == Platform.FLIPKART) {
-                parseFlipkartCsv(file, batch, entityResolutionMap);
+                parseFlipkartCsv(file, batch, entityResolutionMap, uploadId, periodStart, periodEnd);
             }
 
+            // 4. Flush remaining rows
             if (!batch.isEmpty()) {
-                flushToDatabase(batch);
+                flushToDatabase(batch, uploadId, periodStart, periodEnd);
             }
 
             updateJobStatus(uploadId, "COMPLETED");
@@ -75,7 +86,8 @@ public class ReportParserService {
     // ==========================================
     // AMAZON PARSER (XLSX)
     // ==========================================
-    private void parseAmazonExcel(MultipartFile file, List<ParsedRowDto> batch, Map<String, Long> resolutionMap) throws Exception {
+    private void parseAmazonExcel(MultipartFile file, List<ParsedRowDto> batch, Map<String, Long> resolutionMap,
+                                  Long uploadId, LocalDate periodStart, LocalDate periodEnd) throws Exception {
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
 
@@ -89,32 +101,30 @@ public class ReportParserService {
                 String matchType = getCellText(row.getCell(8));
 
                 BigDecimal spend = getNumericCell(row.getCell(14));
-                BigDecimal orders = getNumericCell(row.getCell(18));
+                Integer orders = getIntegerCell(row.getCell(18)); // FIXED: Back to Integer
                 BigDecimal sales = getNumericCell(row.getCell(15));
 
-                // O(1) Memory Lookup instead of Database hit
                 Long resolvedProductId = resolutionMap.get(adGroupName);
 
                 if (resolvedProductId != null) {
                     batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, spend, orders, sales));
-                    checkAndFlush(batch);
+                    checkAndFlush(batch, uploadId, periodStart, periodEnd);
                 }
             }
         }
     }
 
     // ==========================================
-    // FLIPKART PARSER (CSV) - FIX 3: OpenCSV
+    // FLIPKART PARSER (CSV)
     // ==========================================
-    private void parseFlipkartCsv(MultipartFile file, List<ParsedRowDto> batch, Map<String, Long> resolutionMap) throws Exception {
-        // OpenCSV automatically handles quoted strings containing commas
+    private void parseFlipkartCsv(MultipartFile file, List<ParsedRowDto> batch, Map<String, Long> resolutionMap,
+                                  Long uploadId, LocalDate periodStart, LocalDate periodEnd) throws Exception {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream()))) {
             String[] cols;
             int lineNumber = 0;
 
             while ((cols = reader.readNext()) != null) {
                 lineNumber++;
-                // Skip the first 3 lines (2 metadata + 1 header)
                 if (lineNumber <= 3) continue;
                 if (cols.length < 17) continue;
 
@@ -122,17 +132,17 @@ public class ReportParserService {
                 String campaignName = cols[3].trim();
                 String keyword = cols[4].trim();
 
-                BigDecimal orders = new BigDecimal(cols[9]).add(new BigDecimal(cols[10]));
-                BigDecimal sales = new BigDecimal(cols[13]).add(new BigDecimal(cols[14]));
-                BigDecimal spend = new BigDecimal(cols[16]);
+                // FIXED: Parsed to Integer
+                Integer orders = Integer.parseInt(cols[9].trim()) + Integer.parseInt(cols[10].trim());
+                BigDecimal sales = new BigDecimal(cols[13].trim()).add(new BigDecimal(cols[14].trim()));
+                BigDecimal spend = new BigDecimal(cols[16].trim());
                 String matchType = "BROAD";
 
-                // O(1) Memory Lookup
                 Long resolvedProductId = resolutionMap.get(campaignName);
 
                 if (resolvedProductId != null) {
                     batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, spend, orders, sales));
-                    checkAndFlush(batch);
+                    checkAndFlush(batch, uploadId, periodStart, periodEnd);
                 }
             }
         }
@@ -142,18 +152,21 @@ public class ReportParserService {
     // HELPER METHODS
     // ==========================================
     private void updateJobStatus(Long uploadId, String status) {
-        uploadRepository.updateStatus(uploadId,status);
+        uploadRepository.updateStatus(uploadId, status);
     }
 
-    private void checkAndFlush(List<ParsedRowDto> batch) {
+    // Passes the DB variables directly to the correct flush method
+    private void checkAndFlush(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
         if (batch.size() >= 1000) {
-            flushToDatabase(batch);
-            batch.clear(); // Free up Java Heap space
+            flushToDatabase(batch, uploadId, periodStart, periodEnd);
+            batch.clear();
         }
     }
 
-    private void flushToDatabase(List<ParsedRowDto> batch) {
+    // The ONLY flush method you need now
+    private void flushToDatabase(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
         log.info("Flushing batch of {} rows to the database...", batch.size());
+        searchTermRowJdbcRepository.batchUpsert(batch, uploadId, periodStart, periodEnd);
     }
 
     private String getCellText(Cell cell) {
@@ -165,11 +178,6 @@ public class ReportParserService {
     private BigDecimal getNumericCell(Cell cell) {
         if (cell == null || cell.getCellType() != CellType.NUMERIC) return BigDecimal.ZERO;
         return BigDecimal.valueOf(cell.getNumericCellValue());
-    }
-    private void flushToDatabase(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
-        log.info("Flushing batch of {} rows to the database...", batch.size());
-
-        searchTermRowJdbcRepository.batchUpsert(batch, uploadId, periodStart, periodEnd);
     }
 
     private Integer getIntegerCell(Cell cell) {
