@@ -1,6 +1,8 @@
 package com.tverseIQ.backend.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -8,6 +10,8 @@ import java.time.LocalDateTime;
 @Table(name="channel_sku_map", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"channel_product_id","platform"})
 })
+@Getter
+@Setter
 public class ChannelSkuMap {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
