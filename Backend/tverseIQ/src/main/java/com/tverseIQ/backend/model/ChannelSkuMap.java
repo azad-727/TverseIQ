@@ -13,8 +13,11 @@ public class ChannelSkuMap {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long mapId;
 
-    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="product_id",nullable = false)
+    @ManyToOne(fetch=FetchType.LAZY)
+    private Product product;
+
+    @Column(name="channel_product_id", nullable = false,length = 64)
     private String channelProductId;
 
     @Enumerated(EnumType.STRING)

@@ -44,4 +44,5 @@ target/
 # IDE
 .idea/
 .vscode/
+.No-Public Folder/
 
