@@ -28,5 +28,14 @@ public interface ProductKeywordStatsRepository extends JpaRepository<ProductKeyw
         @Param("limit") int limit
         );
 
+    @Query("""
+        SELECT 
+            COALESCE(SUM(p.cumulativeSpend), 0), 
+            COALESCE(SUM(p.cumulativeSales), 0), 
+            COALESCE(SUM(p.cumulativeOrders), 0) 
+        FROM ProductKeywordStats p
+    """)
+    List<Object[]> getRawGlobalSums();
+
     }
 

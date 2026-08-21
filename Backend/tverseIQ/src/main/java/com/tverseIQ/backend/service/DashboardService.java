@@ -72,13 +72,26 @@ public class DashboardService {
         }).collect(Collectors.toList());
     }
     public DashboardDto.GlobalMetricsDto getGlobalMetrics(){
-        return new DashboardDto.GlobalMetricsDto(
-                new BigDecimal("150000.00"),
-                new BigDecimal("450000.00"),
-                850,
-                new BigDecimal("3.00"),
-                new BigDecimal("33.33")
-        );
+        List<Object[]> results=statsRepository.getRawGlobalSums();
+
+        if(results==null || results.isEmpty()||results.get(0)[0]==null){
+            return new DashboardDto.GlobalMetricsDto(BigDecimal.ZERO,BigDecimal.ZERO,0,BigDecimal.ZERO,BigDecimal.ZERO);
+        }
+        Object[] row=results.get(0);
+
+        BigDecimal totalSpend=new BigDecimal(row[0].toString());
+        BigDecimal totalSales=new BigDecimal(row[1].toString());
+        Integer totalOrders = ((Number) row[2]).intValue();
+
+        BigDecimal roas = totalSpend.compareTo(BigDecimal.ZERO) > 0
+                ? totalSales.divide(totalSpend, 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal acos = totalSales.compareTo(BigDecimal.ZERO) > 0
+                ? totalSpend.divide(totalSales, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        return new DashboardDto.GlobalMetricsDto(totalSpend, totalSales, totalOrders, roas, acos);
     }
 
 }

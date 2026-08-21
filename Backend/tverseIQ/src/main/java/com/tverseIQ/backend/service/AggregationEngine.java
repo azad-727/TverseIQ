@@ -67,6 +67,7 @@ public class AggregationEngine {
 
         statsJdbcRepository.batchDeltaUpsert(aggregatedList);
         log.info("Successfully flushed {} aggregated keyword deltas to product_keyword_stats.", aggregatedList.size());
+        clearDashboardCache();
     }
     @CacheEvict(value = "globalMetrics", allEntries = true)
     public void clearDashboardCache() {
