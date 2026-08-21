@@ -5,6 +5,7 @@ import com.tverseIQ.backend.model.ProductKeywordStats;
 import com.tverseIQ.backend.repository.ProductKeywordStatsJdbcRepository;
 import com.tverseIQ.backend.repository.ProductKeywordStatsRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -67,5 +68,8 @@ public class AggregationEngine {
         statsJdbcRepository.batchDeltaUpsert(aggregatedList);
         log.info("Successfully flushed {} aggregated keyword deltas to product_keyword_stats.", aggregatedList.size());
     }
-
+    @CacheEvict(value = "globalMetrics", allEntries = true)
+    public void clearDashboardCache() {
+        log.info("Redis cache 'globalMetrics' evicted due to new data ingestion.");
+    }
 }
