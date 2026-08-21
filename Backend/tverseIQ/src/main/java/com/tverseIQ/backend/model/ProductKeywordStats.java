@@ -22,8 +22,19 @@ public class ProductKeywordStats {
     @Column(name="product_id", nullable = false)
     private Long productId;
 
+    @Id
+    @Column(name="match_type",nullable = false,length=255)
+    private String matchType;
+
+    @Column(name = "cumulative_impressions", nullable = false)
+    private Integer cumulativeImpressions = 0;
+
+    @Column(name = "cumulative_clicks", nullable = false)
+    private Integer cumulativeClicks = 0;
+
     @Column(name="keyword",nullable = false,length=255)
     private String keyword;
+
 
     @Column(name="cumulative_orders",nullable = false)
     private Integer cumulativeOrders=0;
@@ -45,6 +56,12 @@ public class ProductKeywordStats {
 
     @Column(name="timesAppeared",nullable = false)
     private Integer timesAppeared =0;
+
+    @Column(name = "consistency_index", precision = 5, scale = 2)
+    private BigDecimal consistencyIndex = BigDecimal.ZERO;
+
+    @Column(name = "search_intent_score", precision = 5, scale = 2)
+    private BigDecimal searchIntentScore = BigDecimal.ZERO;
 
     @Column(name="firstConvertedData")
     private LocalDate firstConvertedData;

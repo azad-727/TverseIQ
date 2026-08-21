@@ -2,6 +2,7 @@ package com.tverseIQ.backend.service;
 
 import com.tverseIQ.backend.dto.ParsedRowDto;
 import com.tverseIQ.backend.model.ProductKeywordStats;
+import com.tverseIQ.backend.repository.ProductKeywordStatsJdbcRepository;
 import com.tverseIQ.backend.repository.ProductKeywordStatsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,9 +17,9 @@ import java.util.List;
 @Service
 public class AggregationEngine {
 
-    private final ProductKeywordStatsRepository statsJdbcRepository;
+    private final ProductKeywordStatsJdbcRepository statsJdbcRepository;
 
-    public AggregationEngine(ProductKeywordStatsRepository statsJdbcRepository) {
+    public AggregationEngine(ProductKeywordStatsJdbcRepository statsJdbcRepository) {
         this.statsJdbcRepository = statsJdbcRepository;
     }
 
@@ -56,7 +57,7 @@ public class AggregationEngine {
             stat.setTimesAppeared(1);
 
             if (attributedOrders > 0) {
-                stat.setFirstConvertedDate(periodEnd);
+                stat.setFirstConvertedData(periodEnd);
                 stat.setLastConvertedDate(periodEnd);
             }
 

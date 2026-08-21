@@ -13,4 +13,5 @@ import java.io.Serializable;
 public class ProductKeywordId implements Serializable {
     private Long productId;
     private String keyword;
+    private String matchType;
 }
