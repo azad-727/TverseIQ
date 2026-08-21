@@ -71,5 +71,14 @@ public class DashboardService {
             );
         }).collect(Collectors.toList());
     }
+    public DashboardDto.GlobalMetricsDto getGlobalMetrics(){
+        return new DashboardDto.GlobalMetricsDto(
+                new BigDecimal("150000.00"),
+                new BigDecimal("450000.00"),
+                850,
+                new BigDecimal("3.00"),
+                new BigDecimal("33.33")
+        );
+    }
 
 }
