@@ -1,6 +1,7 @@
 package com.tverseIQ.backend.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class DashboardDto {
 
@@ -40,4 +41,32 @@ public class DashboardDto {
             boolean isReadyToGraduate,
             boolean isBleeding
     ){}
+
+    public record KeywordFilterRequest(
+
+            // 1. One-Click Strategic Presets
+            Boolean presetReadyToGraduate,
+            Boolean presetBleeding,
+            Boolean presetHighTrafficZeroCart,
+            Boolean presetProfitableButStarved,
+
+            // 2. Core Performance Sliders
+            BigDecimal minSpend,
+            BigDecimal maxSpend,
+            BigDecimal minAcos,
+            BigDecimal maxAcos,
+            BigDecimal minCvr,
+            BigDecimal maxCpc,
+            Integer minOrders,
+
+            // 3. Temporal & Consistency
+            Integer minConsistencyDays,
+            String lifecycleStage,
+
+            // 4. Structural & Marketplace
+
+            String marketplace,
+            List<String> matchTypes,
+            List<Long> campaignIds
+    ) {}
 }
