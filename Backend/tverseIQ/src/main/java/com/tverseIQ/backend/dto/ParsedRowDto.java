@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 
 public record ParsedRowDto (
         Long productId,
-        String campaginName,
+        String campaignName,
         String keyword,
         String matchType,
+        Integer impressions,
+        Integer clicks,
         BigDecimal spend,
         Integer orders,
         BigDecimal sales

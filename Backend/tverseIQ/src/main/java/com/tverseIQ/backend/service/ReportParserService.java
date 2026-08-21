@@ -30,13 +30,16 @@ public class ReportParserService {
     private final ChannelSkuMapRepository channelSkuMapRepository;
     private final AdsReportUploadRepository uploadRepository;
     private final SearchTermRowJdbcRepository searchTermRowJdbcRepository;
+    private final AggregationEngine aggregationEngine;
 
     public ReportParserService(ChannelSkuMapRepository channelSkuMapRepository,
                                AdsReportUploadRepository uploadRepository,
-                               SearchTermRowJdbcRepository searchTermRowJdbcRepository) {
+                               SearchTermRowJdbcRepository searchTermRowJdbcRepository,
+                               AggregationEngine aggregationEngine) {
         this.channelSkuMapRepository = channelSkuMapRepository;
         this.uploadRepository = uploadRepository;
         this.searchTermRowJdbcRepository = searchTermRowJdbcRepository;
+        this.aggregationEngine = aggregationEngine;
     }
 
     @Async
@@ -45,14 +48,12 @@ public class ReportParserService {
         updateJobStatus(uploadId, "PROCESSING");
 
         try {
-            // 1. Fetch the upload record to get the periods for the database flush
             AdsReportUpload uploadRecord = uploadRepository.findById(uploadId)
                     .orElseThrow(() -> new RuntimeException("Upload ID not found"));
 
             LocalDate periodStart = uploadRecord.getPeriodStart();
             LocalDate periodEnd = uploadRecord.getPeriodEnd();
 
-            // 2. Pre-load Entity Map
             Map<String, Long> entityResolutionMap = channelSkuMapRepository.findByPlatform(platform)
                     .stream()
                     .collect(Collectors.toMap(
@@ -62,14 +63,12 @@ public class ReportParserService {
 
             List<ParsedRowDto> batch = new ArrayList<>();
 
-            // 3. Parse based on platform (passing the dates and ID down)
             if (platform == Platform.AMAZON) {
                 parseAmazonExcel(file, batch, entityResolutionMap, uploadId, periodStart, periodEnd);
             } else if (platform == Platform.FLIPKART) {
                 parseFlipkartCsv(file, batch, entityResolutionMap, uploadId, periodStart, periodEnd);
             }
 
-            // 4. Flush remaining rows
             if (!batch.isEmpty()) {
                 flushToDatabase(batch, uploadId, periodStart, periodEnd);
             }
@@ -100,14 +99,19 @@ public class ReportParserService {
                 String keyword = getCellText(row.getCell(9));
                 String matchType = getCellText(row.getCell(8));
 
+                // Extracting Impressions & Clicks
+                Integer impressions = getIntegerCell(row.getCell(12));
+                Integer clicks = getIntegerCell(row.getCell(13));
+
                 BigDecimal spend = getNumericCell(row.getCell(14));
-                Integer orders = getIntegerCell(row.getCell(18)); // FIXED: Back to Integer
                 BigDecimal sales = getNumericCell(row.getCell(15));
+                Integer orders = getIntegerCell(row.getCell(18));
 
                 Long resolvedProductId = resolutionMap.get(adGroupName);
 
                 if (resolvedProductId != null) {
-                    batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, spend, orders, sales));
+                    // Mapped to match your exact DTO spelling: campaginName[cite: 10]
+                    batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, impressions, clicks, spend, orders, sales));
                     checkAndFlush(batch, uploadId, periodStart, periodEnd);
                 }
             }
@@ -132,7 +136,9 @@ public class ReportParserService {
                 String campaignName = cols[3].trim();
                 String keyword = cols[4].trim();
 
-                // FIXED: Parsed to Integer
+                Integer impressions = 0;
+                Integer clicks = 0;
+
                 Integer orders = Integer.parseInt(cols[9].trim()) + Integer.parseInt(cols[10].trim());
                 BigDecimal sales = new BigDecimal(cols[13].trim()).add(new BigDecimal(cols[14].trim()));
                 BigDecimal spend = new BigDecimal(cols[16].trim());
@@ -141,7 +147,7 @@ public class ReportParserService {
                 Long resolvedProductId = resolutionMap.get(campaignName);
 
                 if (resolvedProductId != null) {
-                    batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, spend, orders, sales));
+                    batch.add(new ParsedRowDto(resolvedProductId, campaignName, keyword, matchType, impressions, clicks, spend, orders, sales));
                     checkAndFlush(batch, uploadId, periodStart, periodEnd);
                 }
             }
@@ -155,7 +161,6 @@ public class ReportParserService {
         uploadRepository.updateStatus(uploadId, status);
     }
 
-    // Passes the DB variables directly to the correct flush method
     private void checkAndFlush(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
         if (batch.size() >= 1000) {
             flushToDatabase(batch, uploadId, periodStart, periodEnd);
@@ -163,10 +168,15 @@ public class ReportParserService {
         }
     }
 
-    // The ONLY flush method you need now
+    // The Critical Hand-off from Phase 1 to Phase 2
     private void flushToDatabase(List<ParsedRowDto> batch, Long uploadId, LocalDate periodStart, LocalDate periodEnd) {
         log.info("Flushing batch of {} rows to the database...", batch.size());
+
+        // 1. Save Raw Data
         searchTermRowJdbcRepository.batchUpsert(batch, uploadId, periodStart, periodEnd);
+
+        // 2. Crunch the Metrics & Update Dashboard[cite: 4]
+        aggregationEngine.processAndAggregateBatch(batch, 1, false, periodEnd);
     }
 
     private String getCellText(Cell cell) {
