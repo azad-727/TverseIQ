@@ -58,7 +58,7 @@ public class AggregationEngine {
             stat.setTimesAppeared(1);
 
             if (attributedOrders > 0) {
-                stat.setFirstConvertedData(periodEnd);
+                stat.setFirstConvertedDate(periodEnd);
                 stat.setLastConvertedDate(periodEnd);
             }
 

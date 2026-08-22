@@ -62,7 +62,7 @@ public class ProductKeywordStatsJdbcRepository {
                 ps.setString(10, stat.getAttributionType());
                 ps.setBigDecimal(11, stat.getConfidenceScore());
                 ps.setInt(12, stat.getTimesAppeared());
-                ps.setDate(13, stat.getFirstConvertedData() != null ? Date.valueOf(stat.getFirstConvertedData()) : null);
+                ps.setDate(13, stat.getFirstConvertedDate() != null ? Date.valueOf(stat.getFirstConvertedDate()) : null);
                 ps.setDate(14, stat.getLastConvertedDate() != null ? Date.valueOf(stat.getLastConvertedDate()) : null);
             }
 

@@ -8,10 +8,7 @@ import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -20,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/reports")
+@CrossOrigin(origins = "*")
 public class ReportUploadController {
 
     private final ReportParserService reportParserService;

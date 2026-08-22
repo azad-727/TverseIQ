@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping
-@CrossOrigin("/api/v1/dashboard")
+@CrossOrigin(origins = "*")
 public class DashboardController {
     @Autowired
     private DashboardService dashboardService;
