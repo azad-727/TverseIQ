@@ -1,5 +1,6 @@
 package com.tverseIQ.backend.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -11,7 +12,7 @@ public class DashboardDto {
             Integer totalOrders,
             BigDecimal roas,
             BigDecimal acos
-    ) {}
+    ){}
 
     public record ProductOverviewDto(
             Long productId,
@@ -20,7 +21,7 @@ public class DashboardDto {
             BigDecimal totalSpend,
             BigDecimal totalSales,
             Integer totalOrders
-    ) {}
+    ) implements Serializable {}
 
     public record KeywordDeepDiveDto(
             String keyword,
@@ -68,5 +69,5 @@ public class DashboardDto {
             String marketplace,
             List<String> matchTypes,
             List<Long> campaignIds
-    ) {}
+    ){}
 }

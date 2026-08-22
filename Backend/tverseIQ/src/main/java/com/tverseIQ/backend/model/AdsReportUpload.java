@@ -15,6 +15,7 @@ public class AdsReportUpload {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "upload_id")
     private Long uploadId;
 
     @Column(name="fileHash",nullable = false,unique = true,length = 64)
