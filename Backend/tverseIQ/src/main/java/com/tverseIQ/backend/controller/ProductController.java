@@ -3,6 +3,7 @@ package com.tverseIQ.backend.controller;
 import com.tverseIQ.backend.dto.ProductDto;
 import com.tverseIQ.backend.model.Product;
 import com.tverseIQ.backend.service.ProductService;
+import com.tverseIQ.backend.service.ReturnAnalyticsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +17,11 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService productService;
+    private final ReturnAnalyticsService returnAnalyticsService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService,ReturnAnalyticsService returnAnalyticsService) {
         this.productService = productService;
+        this.returnAnalyticsService=returnAnalyticsService;
     }
 
 
@@ -59,5 +62,14 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/analytics/returns/{sku}")
+    public ResponseEntity<?> getLocalReturnRate(@PathVariable String sku) {
+        try {
+            return ResponseEntity.ok(returnAnalyticsService.calculateReturnRate(sku));
+        } catch (Exception e) {
+            // Return 0 so the frontend doesn't crash if an error occurs
+            return ResponseEntity.ok(Map.of("sku", sku, "returnRatePct", 0.0));
+        }
     }
 }
