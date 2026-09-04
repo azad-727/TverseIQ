@@ -68,6 +68,8 @@ public class DashboardDto {
 
             String marketplace,
             List<String> matchTypes,
-            List<Long> campaignIds
+            List<Long> campaignIds,
+            List<Long> productIds,
+            String keyword
     ){}
 }

@@ -19,17 +19,17 @@ public class DashboardController {
     public ResponseEntity<DashboardDto.GlobalMetricsDto> getGlobalMetrics() {
         return ResponseEntity.ok(dashboardService.getGlobalMetrics());
     }
+
     @PostMapping("/discovery")
-    public ResponseEntity<List<DashboardDto.KeywordDeepDiveDto>> discoverKeywords(
+    public ResponseEntity<org.springframework.data.domain.Page<DashboardDto.KeywordDeepDiveDto>> discoverKeywords(
             @RequestBody(required = false) DashboardDto.KeywordFilterRequest filterRequest,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-
         DashboardDto.KeywordFilterRequest request = (filterRequest != null)
                 ? filterRequest
-                : new DashboardDto.KeywordFilterRequest(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                : new DashboardDto.KeywordFilterRequest(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,null, null);
 
-        List<DashboardDto.KeywordDeepDiveDto> results = dashboardService.getFilteredKeywords(request, page, size);
+        org.springframework.data.domain.Page<DashboardDto.KeywordDeepDiveDto> results = dashboardService.getFilteredKeywords(request, page, size);
         return ResponseEntity.ok(results);
     }
 

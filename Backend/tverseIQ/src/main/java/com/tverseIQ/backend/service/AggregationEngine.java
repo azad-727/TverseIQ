@@ -27,7 +27,6 @@ public class AggregationEngine {
     public void processAndAggregateBatch(List<ParsedRowDto> batch, int mappedProductCount, boolean hasAsin, LocalDate periodEnd) {
         if (batch.isEmpty()) return;
 
-        // FR-3: 3-Case Attribution Math
         BigDecimal confidenceScore;
         String attributionType;
 
@@ -39,36 +38,64 @@ public class AggregationEngine {
             attributionType = "SHARED";
         }
 
-        List<ProductKeywordStats> aggregatedList = new ArrayList<>(batch.size());
+        // Group keywords and sum metrics in memory!
+        java.util.Map<String, ProductKeywordStats> groupedStats = new java.util.HashMap<>();
 
         for (ParsedRowDto row : batch) {
-            ProductKeywordStats stat = new ProductKeywordStats();
-            stat.setProductId(row.productId());
-            stat.setKeyword(row.keyword());
+            // Create a unique key for grouping
+            String uniqueKey = row.productId() + "_" + row.keyword() + "_" + row.matchType();
 
-            BigDecimal attributedSpend = row.spend().multiply(confidenceScore).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal attributedSales = row.sales().multiply(confidenceScore).setScale(2, RoundingMode.HALF_UP);
-            int attributedOrders = Math.round(row.orders() * confidenceScore.floatValue());
+            int attributedImpressions = Math.round((row.impressions() != null ? row.impressions() : 0) * confidenceScore.floatValue());
+            int attributedClicks = Math.round((row.clicks() != null ? row.clicks() : 0) * confidenceScore.floatValue());
+            int attributedOrders = Math.round((row.orders() != null ? row.orders() : 0) * confidenceScore.floatValue());
+            BigDecimal attributedSpend = (row.spend() != null ? row.spend() : BigDecimal.ZERO).multiply(confidenceScore).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal attributedSales = (row.sales() != null ? row.sales() : BigDecimal.ZERO).multiply(confidenceScore).setScale(2, RoundingMode.HALF_UP);
 
-            stat.setCumulativeSpend(attributedSpend);
-            stat.setCumulativeSales(attributedSales);
-            stat.setCumulativeOrders(attributedOrders);
-            stat.setAttributionType(attributionType);
-            stat.setConfidenceScore(confidenceScore);
-            stat.setTimesAppeared(1);
+            ProductKeywordStats existing = groupedStats.get(uniqueKey);
 
-            if (attributedOrders > 0) {
-                stat.setFirstConvertedDate(periodEnd);
-                stat.setLastConvertedDate(periodEnd);
+            if (existing == null) {
+                ProductKeywordStats stat = new ProductKeywordStats();
+                stat.setProductId(row.productId());
+                stat.setKeyword(row.keyword());
+                stat.setMatchType(row.matchType());
+
+                stat.setCumulativeImpressions(attributedImpressions);
+                stat.setCumulativeClicks(attributedClicks);
+                stat.setCumulativeOrders(attributedOrders);
+                stat.setCumulativeSpend(attributedSpend);
+                stat.setCumulativeSales(attributedSales);
+
+                stat.setAttributionType(attributionType);
+                stat.setConfidenceScore(confidenceScore);
+                stat.setTimesAppeared(1);
+
+                if (attributedOrders > 0) {
+                    stat.setFirstConvertedDate(periodEnd);
+                    stat.setLastConvertedDate(periodEnd);
+                }
+                groupedStats.put(uniqueKey, stat);
+            } else {
+                // If we already have this keyword in the batch, SUM the data instead of overwriting!
+                existing.setCumulativeImpressions(existing.getCumulativeImpressions() + attributedImpressions);
+                existing.setCumulativeClicks(existing.getCumulativeClicks() + attributedClicks);
+                existing.setCumulativeOrders(existing.getCumulativeOrders() + attributedOrders);
+                existing.setCumulativeSpend(existing.getCumulativeSpend().add(attributedSpend));
+                existing.setCumulativeSales(existing.getCumulativeSales().add(attributedSales));
+                existing.setTimesAppeared(existing.getTimesAppeared() + 1);
+
+                if (attributedOrders > 0) {
+                    existing.setLastConvertedDate(periodEnd); // update latest conversion date
+                }
             }
-
-            aggregatedList.add(stat);
         }
 
+        // Send the neatly aggregated list to the database
+        List<ProductKeywordStats> aggregatedList = new ArrayList<>(groupedStats.values());
         statsJdbcRepository.batchDeltaUpsert(aggregatedList);
         log.info("Successfully flushed {} aggregated keyword deltas to product_keyword_stats.", aggregatedList.size());
         clearDashboardCache();
     }
+
     @CacheEvict(value = "globalMetrics", allEntries = true)
     public void clearDashboardCache() {
         log.info("Redis cache 'globalMetrics' evicted due to new data ingestion.");

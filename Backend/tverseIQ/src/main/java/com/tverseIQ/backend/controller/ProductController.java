@@ -1,5 +1,6 @@
 package com.tverseIQ.backend.controller;
 
+import com.tverseIQ.backend.dto.ProductDto;
 import com.tverseIQ.backend.model.Product;
 import com.tverseIQ.backend.service.ProductService;
 import org.springframework.http.HttpStatus;
@@ -18,11 +19,6 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        // Later we can add pagination: @RequestParam(defaultValue = "0") int page
-        return ResponseEntity.ok(productService.getAllProducts());
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable Long id) {
@@ -40,6 +36,12 @@ public class ProductController {
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         Product updatedProduct = productService.updateProduct(id, productDetails);
         return ResponseEntity.ok(updatedProduct);
+    }
+    @GetMapping
+    public ResponseEntity<List<ProductDto>> getAllProducts(
+            @RequestParam(required = false) String mappingStatus
+    ) {
+        return ResponseEntity.ok(productService.getProductsWithMappingStatus(mappingStatus));
     }
 
     @DeleteMapping("/{id}")

@@ -23,28 +23,29 @@ public class ProductKeywordStatsJdbcRepository {
     @Transactional
     public void batchDeltaUpsert(List<ProductKeywordStats> statsList) {
         String sql = """
-            INSERT INTO product_keyword_stats (
-                product_id, keyword, match_type, cumulative_impressions, cumulative_clicks,
-                cumulative_orders, cumulative_spend, cumulative_sales, cvr, 
-                attribution_type, confidence_score, times_appeared, 
-                first_converted_date, last_converted_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                cumulative_impressions = cumulative_impressions + VALUES(cumulative_impressions),
-                cumulative_clicks      = cumulative_clicks + VALUES(cumulative_clicks),
-                cumulative_orders      = cumulative_orders + VALUES(cumulative_orders),
-                cumulative_spend       = cumulative_spend + VALUES(cumulative_spend),
-                cumulative_sales       = cumulative_sales + VALUES(cumulative_sales),
-                times_appeared         = times_appeared + VALUES(times_appeared),
-                cvr = CASE 
-                    WHEN (cumulative_spend + VALUES(cumulative_spend)) > 0 
-                    THEN (cumulative_orders + VALUES(cumulative_orders)) / (cumulative_spend + VALUES(cumulative_spend))
-                    ELSE 0 
-                END,
-                attribution_type       = VALUES(attribution_type),
-                confidence_score       = VALUES(confidence_score),
-                last_converted_date    = GREATEST(COALESCE(last_converted_date, VALUES(last_converted_date)), VALUES(last_converted_date))
-            """;
+                INSERT INTO product_keyword_stats (
+                    product_id, keyword, match_type, cumulative_impressions, cumulative_clicks,
+                    cumulative_orders, cumulative_spend, cumulative_sales, cvr, 
+                    attribution_type, confidence_score, times_appeared, 
+                    first_converted_date, last_converted_date,
+                    consistency_index, search_intent_score
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    cumulative_impressions = cumulative_impressions + VALUES(cumulative_impressions),
+                    cumulative_clicks      = cumulative_clicks + VALUES(cumulative_clicks),
+                    cumulative_orders      = cumulative_orders + VALUES(cumulative_orders),
+                    cumulative_spend       = cumulative_spend + VALUES(cumulative_spend),
+                    cumulative_sales       = cumulative_sales + VALUES(cumulative_sales),
+                    times_appeared         = times_appeared + VALUES(times_appeared),
+                    cvr = CASE 
+                        WHEN (cumulative_spend + VALUES(cumulative_spend)) > 0 
+                        THEN (cumulative_orders + VALUES(cumulative_orders)) / (cumulative_spend + VALUES(cumulative_spend))
+                        ELSE 0 
+                    END,
+                    attribution_type       = VALUES(attribution_type),
+                    confidence_score       = VALUES(confidence_score),
+                    last_converted_date    = GREATEST(COALESCE(last_converted_date, VALUES(last_converted_date)), VALUES(last_converted_date))
+                """;
 
         jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
             @Override
@@ -62,8 +63,10 @@ public class ProductKeywordStatsJdbcRepository {
                 ps.setString(10, stat.getAttributionType());
                 ps.setBigDecimal(11, stat.getConfidenceScore());
                 ps.setInt(12, stat.getTimesAppeared());
-                ps.setDate(13, stat.getFirstConvertedDate() != null ? Date.valueOf(stat.getFirstConvertedDate()) : null);
-                ps.setDate(14, stat.getLastConvertedDate() != null ? Date.valueOf(stat.getLastConvertedDate()) : null);
+                ps.setDate(13, stat.getFirstConvertedDate() != null ? java.sql.Date.valueOf(stat.getFirstConvertedDate()) : null);
+                ps.setDate(14, stat.getLastConvertedDate() != null ? java.sql.Date.valueOf(stat.getLastConvertedDate()) : null);
+                ps.setBigDecimal(15, java.math.BigDecimal.ZERO); // satisfying consistency_index constraint
+                ps.setBigDecimal(16, java.math.BigDecimal.ZERO); // satisfying search_intent_score constraint
             }
 
             @Override

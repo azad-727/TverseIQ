@@ -3,6 +3,7 @@ package com.tverseIQ.backend.service;
 import com.tverseIQ.backend.model.Campaign;
 import com.tverseIQ.backend.model.CampaignProductMap;
 import com.tverseIQ.backend.model.CampaignProductKey;
+import com.tverseIQ.backend.model.Product;
 import com.tverseIQ.backend.repository.CampaignRepository;
 import com.tverseIQ.backend.repository.CampaignProductMapRepository;
 import com.tverseIQ.backend.repository.ProductRepository;
@@ -70,11 +71,16 @@ public class CampaignService {
             productRepository.findById(productId)
                     .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
 
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("Product not found with ID: " + productId));
+
             // Build the composite key and mapping using your custom entities
             CampaignProductKey key = new CampaignProductKey (campaignId, productId);
             CampaignProductMap mapping = new CampaignProductMap();
             mapping.setId(key);
-
+            mapping.setCampaign(campaign);
+            mapping.setProduct(product);
+            mapping.setMappedData(java.time.LocalDate.now());
             campaignProductMapRepository.save(mapping);
         }
     }

@@ -62,14 +62,11 @@ public class DashboardService {
     }
 
     // 3. DISCOVERY GRID (DYNAMIC CRITERIA API)
-    public List<KeywordDeepDiveDto> getFilteredKeywords(KeywordFilterRequest filterRequest, int page, int size) {
-
+    public org.springframework.data.domain.Page<KeywordDeepDiveDto> getFilteredKeywords(KeywordFilterRequest filterRequest, int page, int size) {
         Specification<ProductKeywordStats> spec = KeywordSpecifications.withDynamicFilters(filterRequest);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "cumulativeSpend"));
-
         Page<ProductKeywordStats> statsPage = statsRepository.findAll(spec, pageable);
-
-        return statsPage.stream().map(this::mapToDeepDiveDto).collect(Collectors.toList());
+        return statsPage.map(this::mapToDeepDiveDto);
     }
 
     // UTILITY: METRIC CALCULATION & MAPPING
