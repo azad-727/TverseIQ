@@ -6,8 +6,10 @@ import com.tverseIQ.backend.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -42,6 +44,15 @@ public class ProductController {
             @RequestParam(required = false) String mappingStatus
     ) {
         return ResponseEntity.ok(productService.getProductsWithMappingStatus(mappingStatus));
+    }
+    @PostMapping("/bulk-map-channel")
+    public ResponseEntity<?> uploadBulkChannelMapping(@RequestParam("file") MultipartFile file) {
+        try {
+            int mappedCount = productService.processBulkChannelMapping(file);
+            return ResponseEntity.ok(Map.of("message", "Successfully mapped " + mappedCount + " channels."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Bulk upload failed: " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")

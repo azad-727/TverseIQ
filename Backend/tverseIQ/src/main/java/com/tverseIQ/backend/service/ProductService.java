@@ -2,12 +2,19 @@ package com.tverseIQ.backend.service;
 
 import com.tverseIQ.backend.dto.ProductDto;
 import com.tverseIQ.backend.model.ChannelSkuMap;
+import com.tverseIQ.backend.model.Platform;
 import com.tverseIQ.backend.model.Product;
 import com.tverseIQ.backend.repository.ChannelSkuMapRepository;
 import com.tverseIQ.backend.repository.ProductRepository;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,5 +92,39 @@ public class ProductService {
     public void deleteProduct(Long id) {
         Product existingProduct = getProductById(id);
         productRepository.delete(existingProduct);
+    }
+    @Transactional
+    public int processBulkChannelMapping(MultipartFile file) throws Exception {
+        int mappedCount = 0;
+
+        try (InputStream is = file.getInputStream();
+             Workbook workbook = WorkbookFactory.create(is)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            boolean isFirstRow = true;
+
+            for (Row row : sheet) {
+                if (isFirstRow) { isFirstRow = false; continue; } // Skip header
+
+                if (row.getCell(0) == null || row.getCell(1) == null || row.getCell(2) == null) continue;
+
+                String sku = row.getCell(0).getStringCellValue();
+                String platformStr = row.getCell(1).getStringCellValue();
+                String channelProductId = row.getCell(2).getStringCellValue();
+
+                Product product = productRepository.findBySku(sku).orElse(null);
+
+                if (product != null) {
+                    ChannelSkuMap mapping = new ChannelSkuMap();
+                    mapping.setProduct(product);
+                    mapping.setPlatform(Platform.valueOf(platformStr.toUpperCase()));
+                    mapping.setChannelProductId(channelProductId);
+
+                    channelSkuMapRepository.save(mapping);
+                    mappedCount++;
+                }
+            }
+        }
+        return mappedCount;
     }
 }
