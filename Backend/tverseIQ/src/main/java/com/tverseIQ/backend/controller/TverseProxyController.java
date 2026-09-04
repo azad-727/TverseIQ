@@ -18,10 +18,7 @@ public class TverseProxyController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * Proxy endpoint — browser calls THIS, backend calls Tverse with the secret key.
-     * The API key never leaves the server.
-     */
+
     @GetMapping("/catalog/{sku}")
     public ResponseEntity<?> getProductDetail(@PathVariable String sku) {
         try {
