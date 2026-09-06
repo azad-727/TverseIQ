@@ -1,0 +1,30 @@
+.data-table { width: 100%; font-size: 13px; border-collapse: collapse; text-align: left; }
+.data-table thead { background: var(--grey-50); }
+.data-table th {
+  padding: 10px 16px; 
+  font-size: 11px; 
+  font-weight: 600;
+  color: var(--grey-500); 
+  text-align: left; 
+  white-space: nowrap;
+  letter-spacing: 0.05em; 
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--grey-200); 
+  user-select: none;
+}
+.data-table td { 
+  padding: 10px 16px; 
+  color: var(--grey-700); 
+  border-bottom: 1px solid var(--grey-100); 
+  white-space: nowrap; 
+}
+.data-table tbody tr { transition: background var(--duration-fast); }
+.data-table tbody tr:hover { background: var(--grey-50); }
+.data-table .col-right { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table .col-keyword { 
+  font-weight: 500; 
+  color: var(--grey-900);
+  max-width: 280px; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+}

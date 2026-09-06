@@ -1,0 +1,4 @@
+.upload-page > * + * { margin-top: var(--space-6); }
+.upload-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-8); align-items: start; }
+@media (max-width: 900px) { .upload-layout { grid-template-columns: 1fr; } }
+.upload-config { display: flex; flex-direction: column; gap: var(--space-5); }

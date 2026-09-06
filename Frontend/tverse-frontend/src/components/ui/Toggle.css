@@ -1,0 +1,15 @@
+.toggle-wrapper { display: inline-flex; align-items: center; gap: var(--space-3); cursor: pointer; }
+.toggle-label { font-size: var(--text-sm); color: var(--grey-700); font-weight: var(--weight-medium); }
+.toggle-disabled { opacity: 0.5; pointer-events: none; }
+.toggle-track {
+  width: 40px; height: 22px; border-radius: var(--radius-full);
+  background: var(--grey-200); position: relative; transition: background var(--duration-normal);
+  padding: 0; border: none; cursor: pointer;
+}
+.toggle-checked { background: var(--orange-500); }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  border-radius: 50%; background: white; box-shadow: var(--shadow-sm);
+  transition: transform var(--duration-normal);
+}
+.toggle-checked .toggle-knob { transform: translateX(18px); }

@@ -1,0 +1,14 @@
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--grey-200);
+  border-radius: var(--radius-lg);
+  animation: fadeInUp 0.3s var(--ease-default);
+  transition: box-shadow var(--duration-normal), transform var(--duration-normal);
+}
+.card-pad-sm { padding: var(--space-4); }
+.card-pad-md { padding: var(--space-6); }
+.card-pad-lg { padding: var(--space-8); }
+.card-hoverable:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}

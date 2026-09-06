@@ -1,0 +1,170 @@
+.kw-intel-page {
+  position: relative;
+  display: flex;
+  min-height: calc(100vh - 64px);
+  height: auto;
+  gap: 24px;
+  padding: 24px 0;
+  box-sizing: border-box;
+}
+
+/* Sidebar Styling */
+.kw-sidebar {
+  width: 260px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--grey-200);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: fit-content;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.kw-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--grey-200);
+  padding-bottom: 12px;
+}
+
+.kw-sidebar-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--grey-900);
+  margin: 0;
+}
+
+.kw-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kw-filter-group h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--grey-900);
+  margin: 0;
+}
+
+.kw-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--grey-700);
+  cursor: pointer;
+}
+
+.kw-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--orange-500);
+  cursor: pointer;
+}
+
+.kw-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kw-range-inputs input,
+.kw-single-input input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--grey-300);
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.kw-range-inputs input:focus,
+.kw-single-input input:focus {
+  border-color: var(--orange-500);
+}
+
+.kw-single-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.kw-single-input label {
+  font-size: 12px;
+  color: var(--grey-600);
+}
+
+/* Main Content Area */
+.kw-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0; /* Prevents flex overflow */
+}
+
+/* Amazon Style Top Search Bar */
+.kw-topbar {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--grey-200);
+  padding: 8px;
+}
+
+.kw-search-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  border: 2px solid var(--orange-500); /* Amazon orange highlight */
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kw-category-select {
+  background: #f3f4f6;
+  border: none;
+  padding: 0 16px;
+  height: 100%;
+  font-size: 13px;
+  color: var(--grey-700);
+  cursor: pointer;
+  outline: none;
+}
+
+.kw-category-select:hover {
+  background: #e5e7eb;
+}
+
+.kw-search-divider {
+  width: 1px;
+  height: 100%;
+  background: var(--grey-300);
+}
+
+/* Ensure the Input component inherits cleanly */
+.kw-search-wrapper .tverse-input-container {
+  border: none !important;
+  box-shadow: none !important;
+  height: 100%;
+  border-radius: 0;
+}
+
+.kw-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--grey-200);
+  display: flex;
+  flex-direction: column;
+}

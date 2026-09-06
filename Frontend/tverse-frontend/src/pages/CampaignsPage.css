@@ -1,0 +1,2 @@
+.campaigns-page > * + * { margin-top: var(--space-6); }
+.page-title-section { display: flex; align-items: center; gap: var(--space-3); }

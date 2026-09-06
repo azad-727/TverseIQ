@@ -1,0 +1,27 @@
+.segmented-control {
+  display: inline-flex;
+  background-color: var(--grey-100);
+  padding: 4px;
+  border-radius: var(--radius-md);
+}
+
+.segmented-control-option {
+  height: 32px;
+  border-radius: var(--radius-sm);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: all 200ms var(--ease-default);
+  color: var(--grey-500);
+  background-color: transparent;
+}
+
+.segmented-control-option.active {
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+  color: var(--grey-900);
+  font-weight: 600;
+}

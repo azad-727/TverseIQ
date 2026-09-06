@@ -1,0 +1,15 @@
+.discovery-container { background: var(--bg-surface); border: 1px solid var(--grey-200); border-radius: var(--radius-lg); overflow: hidden; }
+.discovery-scroll { overflow-x: auto; }
+.discovery-table th { cursor: pointer; }
+.discovery-table th:hover { color: var(--grey-700); }
+.discovery-th-inner { display: inline-flex; align-items: center; gap: 4px; }
+.discovery-sort-icon { color: var(--grey-400); }
+.discovery-sort-active { color: var(--orange-500); }
+.discovery-row-grad { background: rgba(34, 197, 94, 0.05); }
+.discovery-row-grad:hover { background: rgba(34, 197, 94, 0.08) !important; }
+.discovery-grad-keyword { display: inline-flex; align-items: center; gap: 6px; }
+.discovery-grad-icon { color: #16A34A; animation: badgePulse 2.5s ease-in-out infinite; flex-shrink: 0; }
+.discovery-row-bleed { background: rgba(239, 68, 68, 0.04); }
+.discovery-row-bleed:hover { background: rgba(239, 68, 68, 0.07) !important; }
+.discovery-bleed-keyword { display: inline-flex; align-items: center; gap: 6px; }
+.discovery-bleed-icon { color: #DC2626; flex-shrink: 0; }
