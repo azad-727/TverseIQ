@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,31 +99,40 @@ public class ProductService {
     public int processBulkChannelMapping(MultipartFile file) throws Exception {
         int mappedCount = 0;
 
-        try (InputStream is = file.getInputStream();
-             Workbook workbook = WorkbookFactory.create(is)) {
-
-            Sheet sheet = workbook.getSheetAt(0);
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            String line;
             boolean isFirstRow = true;
 
-            for (Row row : sheet) {
-                if (isFirstRow) { isFirstRow = false; continue; } // Skip header
+            while ((line = br.readLine()) != null) {
+                if (isFirstRow) {
+                    isFirstRow = false;
+                    continue;
+                }
 
-                if (row.getCell(0) == null || row.getCell(1) == null || row.getCell(2) == null) continue;
+                // Split by comma (handles basic CSV format)
+                String[] columns = line.split(",");
+                if (columns.length < 3) continue;
 
-                String sku = row.getCell(0).getStringCellValue();
-                String platformStr = row.getCell(1).getStringCellValue();
-                String channelProductId = row.getCell(2).getStringCellValue();
+                String sku = columns[0].replace("\"", "").trim();
+                String platformStr = columns[1].replace("\"", "").trim().toUpperCase();
+                String channelProductId = columns[2].replace("\"", "").trim();
+
+                if (sku.isEmpty() || platformStr.isEmpty() || channelProductId.isEmpty()) continue;
 
                 Product product = productRepository.findBySku(sku).orElse(null);
 
                 if (product != null) {
-                    ChannelSkuMap mapping = new ChannelSkuMap();
-                    mapping.setProduct(product);
-                    mapping.setPlatform(Platform.valueOf(platformStr.toUpperCase()));
-                    mapping.setChannelProductId(channelProductId);
+                    try {
+                        ChannelSkuMap mapping = new ChannelSkuMap();
+                        mapping.setProduct(product);
+                        mapping.setPlatform(Platform.valueOf(platformStr));
+                        mapping.setChannelProductId(channelProductId);
 
-                    channelSkuMapRepository.save(mapping);
-                    mappedCount++;
+                        channelSkuMapRepository.save(mapping);
+                        mappedCount++;
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Invalid platform in CSV: " + platformStr);
+                    }
                 }
             }
         }
